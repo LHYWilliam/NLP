@@ -66,7 +66,7 @@ def ppmi(co_matrix: np.ndarray, eps: float = 1e-8, show: bool = False) -> (np.nd
     N = np.sum(co_matrix)
     S = np.sum(co_matrix, axis=0)
 
-    cnt, now, total = 0, 0, co_matrix.shape[0] * co_matrix.shape[1]
+    now, total = 0, co_matrix.shape[0] * co_matrix.shape[1]
 
     for i in range(co_matrix.shape[0]):
         for j in range(co_matrix.shape[1]):
@@ -74,8 +74,37 @@ def ppmi(co_matrix: np.ndarray, eps: float = 1e-8, show: bool = False) -> (np.nd
             ppmi_matrix[i, j] = max(0, pmi)
 
             if show:
-                cnt += 1
-                if (cnt / total) > (now / 10): now += 1
-                print('\r[' + '-' * now + ' ' * (10 - now) + ']' + f' {now}/10', end='')
+                now = progress_bar(now + 1, total)
 
     return ppmi_matrix
+
+
+def context_target(corpus: np.ndarray, window_sizw: int = 1) -> (np.ndarray, np.ndarray):
+    contexts = []
+    target = corpus[window_sizw:-window_sizw]
+
+    for index in range(window_sizw, len(corpus) - window_sizw):
+        context = []
+        for window in range(-window_sizw, window_sizw + 1):
+            if window != 0:
+                context.append(corpus[index+window])
+        contexts.append(context)
+
+    return np.array(contexts), np.array(target)
+
+
+def convert_one_hot(source: np.ndarray, vocal_szie: int) -> np.ndarray:
+    target_shape = (*source.shape, vocal_szie)
+    target = np.zeros(target_shape, dtype=np.int32)
+    
+    target[*np.indices(source.shape), source] = 1
+    
+    return target
+
+
+
+def progress_bar(now: int, total: int, message='', bais: int = 0.01) -> (int):
+    count = int((now / total + bais) * 10)
+    print(f'\r{message} [' + '-' * count + ' ' * (10 - count) + ']' +
+          f' {count}/10', end='')
+    return now
