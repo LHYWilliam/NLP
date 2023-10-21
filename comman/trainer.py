@@ -14,7 +14,7 @@ class Trainer:
         self.eval_interval = None
         self.current_epoch = 0
 
-    def train(self, x, t, max_epoch=10, batch_size=32, max_grad=None, eval_interval=20):
+    def train(self, x, t, max_epoch: int = 10, batch_size: int = 32, max_grad=None, eval_interval=20):
         data_size = len(x)
         max_iters = data_size // batch_size
         self.eval_interval = eval_interval
@@ -44,9 +44,9 @@ class Trainer:
 
                 if (eval_interval is not None) and (iters % eval_interval) == 0:
                     avg_loss = total_loss / loss_count
-                    elapsd_time = time.time() - start_time
-                    print(
-                        f'| epoch {self.current_epoch + 1} | iter {iters + 1}/{max_iters} | time {elapsd_time}s | loss {float(avg_loss):.2f}')
+                    elapsed_time = time.time() - start_time
+                    print(f'| epoch {self.current_epoch + 1} | iter {iters + 1}/{max_iters} '
+                          f'| time {elapsed_time:.2f}s | loss {float(avg_loss):.2f}')
                     self.loss_list.append(float(avg_loss))
                     total_loss, loss_count = 0, 0
 
@@ -87,8 +87,11 @@ def remove_duplicate(params: list, grads: list):
                     params.pop(j)
                     grads.pop(j)
 
-                if find_flag: break
-            if find_flag: break
-        if find_flag: break
+                if find_flag:
+                    break
+            if find_flag:
+                break
+        if find_flag:
+            break
 
     return params, grads

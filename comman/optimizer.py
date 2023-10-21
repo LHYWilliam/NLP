@@ -2,7 +2,7 @@ import numpy as np
 
 
 class Adam:
-    def __init__(self, lr: float = 0.01, beta1: float = 0.9, beta2: float = 0.999):
+    def __init__(self, lr: float = 0.001, beta1: float = 0.9, beta2: float = 0.999):
         self.lr, self.beta1, self.beta2 = lr, beta1, beta2
         self.iter, self.m, self.v = 0, None, None
 

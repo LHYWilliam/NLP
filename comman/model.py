@@ -29,6 +29,7 @@ class CBOW:
 
         score = self.out_layer.forward(h)
         loss = self.loss_layer.forward(score, target)
+
         return loss
 
     def backward(self, dout: int = 1):

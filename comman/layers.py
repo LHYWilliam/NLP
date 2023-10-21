@@ -10,14 +10,14 @@ class Affine:
         self.x = None
 
     def forward(self, x: np.ndarray) -> np.ndarray:
-        W = self.params
+        W, = self.params
         out = np.dot(x, W)
         self.x = x
 
         return out
 
     def backward(self, dout: np.ndarray) -> np.ndarray:
-        W = self.params
+        W, = self.params
 
         dx = np.dot(dout, W.T)
         dW = np.dot(self.x.T, dout)
