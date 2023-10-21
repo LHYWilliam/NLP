@@ -31,8 +31,8 @@ def comatrix(corpus: np.ndarray, vocab_count: int, window_size: int = 1) -> np.n
 
 
 def similarity(x: np.ndarray, y: np.ndarray) -> np.float64:
-    nx = x / np.sqrt(np.sum(x**2))
-    ny = y / np.sqrt(np.sum(y**2))
+    nx = x / np.sqrt(np.sum(x ** 2))
+    ny = y / np.sqrt(np.sum(y ** 2))
     return np.dot(nx, ny)
 
 
@@ -49,7 +49,7 @@ def similarities(query: str, word_to_id: dict, id_to_word: dict, co_matrix: np.n
         similar_vector[i] = similarity(co_matrix[i], query_vector)
 
     result = {}
-    for word_id in (-similar_vector).argsort()[1:top+1]:
+    for word_id in (-similar_vector).argsort()[1:top + 1]:
         result[id_to_word[word_id]] = similar_vector[word_id]
 
     if show:
@@ -87,7 +87,7 @@ def context_target(corpus: np.ndarray, window_size: int = 1) -> (np.ndarray, np.
         context = []
         for window in range(-window_size, window_size + 1):
             if window != 0:
-                context.append(corpus[index+window])
+                context.append(corpus[index + window])
         contexts.append(context)
 
     return np.array(contexts), np.array(target)
@@ -96,10 +96,22 @@ def context_target(corpus: np.ndarray, window_size: int = 1) -> (np.ndarray, np.
 def convert_one_hot(source: np.ndarray, vocal_size: int) -> np.ndarray:
     target_shape = (*source.shape, vocal_size)
     target = np.zeros(target_shape, dtype=np.int32)
-    
+
     target[*np.indices(source.shape), source] = 1
-    
+
     return target
+
+
+def clip_grads(grads: list, max_norm):
+    total_norm = 0
+    for grad in grads:
+        total_norm += np.sum(grad ** 2)
+    total_norm = np.sqrt(total_norm)
+
+    rate = max_norm / (total_norm + 1e-6)
+    if rate < 1:
+        for grad in grads:
+            grad *= rate
 
 
 def progress_bar(now: int, total: int, message='', basis: int = 0.01) -> int:
