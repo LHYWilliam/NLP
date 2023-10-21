@@ -4,29 +4,28 @@ import numpy
 import numpy as np
 import matplotlib.pyplot as plt
 
-from comman.util import clip_grads
-
 
 class Trainer:
     def __init__(self, model, optimizer):
         self.model, self.optimizer = model, optimizer
         self.loss_list = []
-        self.eval_interval = None
+        self.val_per_iter = None
         self.current_epoch = 0
 
-    def train(self, x, t, max_epoch: int = 10, batch_size: int = 32, max_grad=None, eval_interval=20):
+    def train(self, x, t, goal_epochs=10, batch_size=32, val_per_iter=20):
+        self.val_per_iter = val_per_iter
+
         data_size = len(x)
-        max_iters = data_size // batch_size
-        self.eval_interval = eval_interval
+        goal_iters = data_size // batch_size
+
         total_loss, loss_count = 0, 0
 
         start_time = time.time()
-        for epoch in range(max_epoch):
-            idx = np.random.permutation(numpy.arange(data_size))
-            x = x[idx]
-            t = t[idx]
+        for epoch in range(goal_epochs):
+            index = np.random.permutation(numpy.arange(data_size))
+            x, t = x[index], t[index]
 
-            for iters in range(max_iters):
+            for iters in range(goal_iters):
                 x_batch = x[iters * batch_size:(iters + 1) * batch_size]
                 t_batch = t[iters * batch_size:(iters + 1) * batch_size]
 
@@ -34,32 +33,27 @@ class Trainer:
                 self.model.backward()
 
                 params, grads = remove_duplicate(self.model.params, self.model.grads)
-                if max_grad is not None:
-                    clip_grads(grads, max_grad)
-
                 self.optimizer.update(params, grads)
 
                 total_loss += loss
                 loss_count += 1
 
-                if (eval_interval is not None) and (iters % eval_interval) == 0:
-                    avg_loss = total_loss / loss_count
+                val = (val_per_iter is not None) and (iters % val_per_iter) == 0
+                if val:
+                    average_loss = total_loss / loss_count
                     elapsed_time = time.time() - start_time
-                    print(f'| epoch {self.current_epoch + 1} | iter {iters + 1}/{max_iters} '
-                          f'| time {elapsed_time:.2f}s | loss {float(avg_loss):.2f}')
-                    self.loss_list.append(float(avg_loss))
+                    print(f'| epoch {self.current_epoch + 1} | iter {iters + 1}/{goal_iters} '
+                          f'| time {elapsed_time:.2f}s | loss {float(average_loss):.2f}')
+                    self.loss_list.append(float(average_loss))
                     total_loss, loss_count = 0, 0
 
             self.current_epoch += 1
 
-    def plot(self, ylim=None):
+    def plot(self):
         x = np.arange(len(self.loss_list))
-        if ylim is not None:
-            plt.ylim(*ylim)
 
         plt.plot(x, self.loss_list, label='train')
-
-        plt.xlabel(f'iterations (x{self.eval_interval})')
+        plt.xlabel(f'iterations (x{self.val_per_iter})')
         plt.ylabel('loss')
 
         plt.show()

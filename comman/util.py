@@ -37,7 +37,7 @@ def similarity(x: np.ndarray, y: np.ndarray) -> np.float64:
 
 
 def similarities(query: str, word_to_id: dict, id_to_word: dict, co_matrix: np.ndarray,
-                 top: int = None, show: bool = False) -> (dict):
+                 top: int = None, show: bool = False) -> dict:
     query_id = word_to_id[query]
     query_vector = co_matrix[query_id]
     vocab_count = len(word_to_id)
@@ -61,7 +61,7 @@ def similarities(query: str, word_to_id: dict, id_to_word: dict, co_matrix: np.n
     return result
 
 
-def ppmi(co_matrix: np.ndarray, eps: float = 1e-8, show: bool = False) -> (np.ndarray):
+def ppmi(co_matrix: np.ndarray, eps: float = 1e-8, show: bool = False) -> np.ndarray:
     ppmi_matrix = np.zeros_like(co_matrix, dtype=np.float32)
     N = np.sum(co_matrix)
     S = np.sum(co_matrix, axis=0)
