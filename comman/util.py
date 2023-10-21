@@ -17,7 +17,7 @@ def preprocess(text: str) -> (np.ndarray, dict, dict):
     return corpus, word_to_id, id_to_word
 
 
-def comatrix(corpus: np.ndarray, vocab_count: int, window_size: int = 1) -> (np.ndarray):
+def comatrix(corpus: np.ndarray, vocab_count: int, window_size: int = 1) -> np.ndarray:
     co_matrix = np.zeros((vocab_count, vocab_count), dtype=np.int32)
 
     for index, word_id in enumerate(corpus):
@@ -30,7 +30,7 @@ def comatrix(corpus: np.ndarray, vocab_count: int, window_size: int = 1) -> (np.
     return co_matrix
 
 
-def similarity(x: np.ndarray, y: np.ndarray) -> (np.float64):
+def similarity(x: np.ndarray, y: np.ndarray) -> np.float64:
     nx = x / np.sqrt(np.sum(x**2))
     ny = y / np.sqrt(np.sum(y**2))
     return np.dot(nx, ny)
@@ -49,8 +49,8 @@ def similarities(query: str, word_to_id: dict, id_to_word: dict, co_matrix: np.n
         similar_vector[i] = similarity(co_matrix[i], query_vector)
 
     result = {}
-    for id in (-similar_vector).argsort()[1:top+1]:
-        result[id_to_word[id]] = similar_vector[id]
+    for word_id in (-similar_vector).argsort()[1:top+1]:
+        result[id_to_word[word_id]] = similar_vector[word_id]
 
     if show:
         print(f"[query] {query}")
@@ -79,13 +79,13 @@ def ppmi(co_matrix: np.ndarray, eps: float = 1e-8, show: bool = False) -> (np.nd
     return ppmi_matrix
 
 
-def context_target(corpus: np.ndarray, window_sizw: int = 1) -> (np.ndarray, np.ndarray):
+def context_target(corpus: np.ndarray, window_size: int = 1) -> (np.ndarray, np.ndarray):
     contexts = []
-    target = corpus[window_sizw:-window_sizw]
+    target = corpus[window_size:-window_size]
 
-    for index in range(window_sizw, len(corpus) - window_sizw):
+    for index in range(window_size, len(corpus) - window_size):
         context = []
-        for window in range(-window_sizw, window_sizw + 1):
+        for window in range(-window_size, window_size + 1):
             if window != 0:
                 context.append(corpus[index+window])
         contexts.append(context)
@@ -93,8 +93,8 @@ def context_target(corpus: np.ndarray, window_sizw: int = 1) -> (np.ndarray, np.
     return np.array(contexts), np.array(target)
 
 
-def convert_one_hot(source: np.ndarray, vocal_szie: int) -> np.ndarray:
-    target_shape = (*source.shape, vocal_szie)
+def convert_one_hot(source: np.ndarray, vocal_size: int) -> np.ndarray:
+    target_shape = (*source.shape, vocal_size)
     target = np.zeros(target_shape, dtype=np.int32)
     
     target[*np.indices(source.shape), source] = 1
@@ -102,9 +102,8 @@ def convert_one_hot(source: np.ndarray, vocal_szie: int) -> np.ndarray:
     return target
 
 
-
-def progress_bar(now: int, total: int, message='', bais: int = 0.01) -> (int):
-    count = int((now / total + bais) * 10)
+def progress_bar(now: int, total: int, message='', basis: int = 0.01) -> int:
+    count = int((now / total + basis) * 10)
     print(f'\r{message} [' + '-' * count + ' ' * (10 - count) + ']' +
           f' {count}/10', end='')
     return now
