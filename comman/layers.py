@@ -3,7 +3,7 @@ import numpy as np
 from comman.functions import (softmax, cross_entropy_error)
 
 
-class Affine:
+class MatMul:
     def __init__(self, W: np.ndarray):
         self.params = [W]
         self.grads = [np.zeros_like(W)]
@@ -49,3 +49,53 @@ class SoftmaxWithLoss:
         dx = dx * dout / batch_size
 
         return dx
+
+
+class Embedding:
+    def __init__(self, W):
+        self.params = [W]
+        self.grads = [np.zeros_like(W)]
+        self.index = None
+
+    def forward(self, index):
+        self.index = index
+        W, = self.params
+
+        out = W[index]
+
+        return out
+
+    def backward(self, dout):
+        dW, = self.grads
+        dW[...] = 0
+
+        np.add.at(dW, self.index, dout)
+
+        return None
+
+
+class EmbeddingDot:
+    def __init__(self, W):
+        self.embed = Embedding(W)
+        self.params = self.embed.params
+        self.grads = self.embed.grads
+        self.cache = None
+
+    def forward(self, h, index):
+        target_W = self.embed.forward(index)
+        out = np.sum(target_W * h, axis=1)
+
+        self.cache = (h, target_W)
+
+        return out
+
+    def backward(self, dout: np.ndarray):
+        h, target_W = self.cache
+        dout = dout.reshape(dout.shape[0], 1)
+
+        dtarget_W = dout * h
+        self.embed.backward(dtarget_W)
+
+        dh = dout * target_W
+
+        return dh

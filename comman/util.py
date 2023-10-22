@@ -17,7 +17,7 @@ def preprocess(text: str) -> (np.ndarray, dict, dict):
     return corpus, word_to_id, id_to_word
 
 
-def comatrix(corpus: np.ndarray, vocab_count: int, window_size: int = 1) -> np.ndarray:
+def comatrix(corpus: np.ndarray, vocab_count: int, window_size=1) -> np.ndarray:
     co_matrix = np.zeros((vocab_count, vocab_count), dtype=np.int32)
 
     for index, word_id in enumerate(corpus):
@@ -37,7 +37,7 @@ def similarity(x: np.ndarray, y: np.ndarray) -> np.float64:
 
 
 def similarities(query: str, word_to_id: dict, id_to_word: dict, co_matrix: np.ndarray,
-                 top: int = None, show: bool = False) -> dict:
+                 top=None, show=False) -> dict:
     query_id = word_to_id[query]
     query_vector = co_matrix[query_id]
     vocab_count = len(word_to_id)
@@ -61,7 +61,7 @@ def similarities(query: str, word_to_id: dict, id_to_word: dict, co_matrix: np.n
     return result
 
 
-def ppmi(co_matrix: np.ndarray, eps: float = 1e-8, show: bool = False) -> np.ndarray:
+def ppmi(co_matrix: np.ndarray, eps=1e-8, show=False) -> np.ndarray:
     ppmi_matrix = np.zeros_like(co_matrix, dtype=np.float32)
     N = np.sum(co_matrix)
     S = np.sum(co_matrix, axis=0)
@@ -79,7 +79,7 @@ def ppmi(co_matrix: np.ndarray, eps: float = 1e-8, show: bool = False) -> np.nda
     return ppmi_matrix
 
 
-def context_target(corpus: np.ndarray, window_size: int = 1) -> (np.ndarray, np.ndarray):
+def context_target(corpus: np.ndarray, window_size=1) -> (np.ndarray, np.ndarray):
     contexts = []
     target = corpus[window_size:-window_size]
 
@@ -93,7 +93,7 @@ def context_target(corpus: np.ndarray, window_size: int = 1) -> (np.ndarray, np.
     return np.array(contexts), np.array(target)
 
 
-def convert_one_hot(source: np.ndarray, vocal_size: int) -> np.ndarray:
+def convert_one_hot(source: np.ndarray, vocal_size) -> np.ndarray:
     target_shape = (*source.shape, vocal_size)
     target = np.zeros(target_shape, dtype=np.int32)
 
@@ -114,7 +114,7 @@ def clip_grads(grads: list, max_norm):
             grad *= rate
 
 
-def progress_bar(now: int, total: int, message='', basis: int = 0.01) -> int:
+def progress_bar(now, total, message='', basis=0.01) -> int:
     count = int((now / total + basis) * 10)
     print(f'\r{message} [' + '-' * count + ' ' * (10 - count) + ']' +
           f' {count}/10', end='')
