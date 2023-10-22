@@ -1,4 +1,6 @@
-import numpy as np
+import cupy as np
+
+np.cuda.set_allocator(np.cuda.MemoryPool().malloc)
 
 
 class Adam:
@@ -6,7 +8,7 @@ class Adam:
         self.lr, self.beta1, self.beta2 = lr, beta1, beta2
         self.iter, self.m, self.v = 0, None, None
 
-    def update(self, params: list, grads: list):
+    def update(self, params, grads):
         if self.m is None:
             self.m, self.v = [], []
             for param in params:

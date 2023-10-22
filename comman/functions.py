@@ -1,7 +1,9 @@
-import numpy as np
+import cupy as np
+
+np.cuda.set_allocator(np.cuda.MemoryPool().malloc)
 
 
-def softmax(x: np.ndarray) -> np.ndarray:
+def softmax(x):
     x -= np.max(x, axis=-1, keepdims=True)
     x = np.exp(x)
     x = x / np.sum(x, axis=-1, keepdims=True)
@@ -9,7 +11,7 @@ def softmax(x: np.ndarray) -> np.ndarray:
     return x
 
 
-def cross_entropy_error(y: np.ndarray, t: np.ndarray):
+def cross_entropy_error(y, t):
     if y.ndim == 1:
         t = t.reshape(1, t.size)
         y = y.reshape(1, y.size)

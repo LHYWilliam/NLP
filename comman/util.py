@@ -1,7 +1,9 @@
-import numpy as np
+import cupy as np
+
+np.cuda.set_allocator(np.cuda.MemoryPool().malloc)
 
 
-def preprocess(text: str) -> (np.ndarray, dict, dict):
+def preprocess(text):
     text = text.lower().replace('.', ' .')
     words = text.split(' ')
 
@@ -17,7 +19,7 @@ def preprocess(text: str) -> (np.ndarray, dict, dict):
     return corpus, word_to_id, id_to_word
 
 
-def comatrix(corpus: np.ndarray, vocab_count: int, window_size=1) -> np.ndarray:
+def comatrix(corpus, vocab_count, window_size=1):
     co_matrix = np.zeros((vocab_count, vocab_count), dtype=np.int32)
 
     for index, word_id in enumerate(corpus):
@@ -30,13 +32,13 @@ def comatrix(corpus: np.ndarray, vocab_count: int, window_size=1) -> np.ndarray:
     return co_matrix
 
 
-def similarity(x: np.ndarray, y: np.ndarray) -> np.float64:
+def similarity(x, y):
     nx = x / np.sqrt(np.sum(x ** 2))
     ny = y / np.sqrt(np.sum(y ** 2))
     return np.dot(nx, ny)
 
 
-def similarities(query: str, word_to_id: dict, id_to_word: dict, co_matrix: np.ndarray,
+def similarities(query, word_to_id, id_to_word, co_matrix,
                  top=None, show=False) -> dict:
     query_id = word_to_id[query]
     query_vector = co_matrix[query_id]
@@ -61,7 +63,7 @@ def similarities(query: str, word_to_id: dict, id_to_word: dict, co_matrix: np.n
     return result
 
 
-def ppmi(co_matrix: np.ndarray, eps=1e-8, show=False) -> np.ndarray:
+def ppmi(co_matrix, eps=1e-8, show=False):
     ppmi_matrix = np.zeros_like(co_matrix, dtype=np.float32)
     N = np.sum(co_matrix)
     S = np.sum(co_matrix, axis=0)
@@ -79,7 +81,7 @@ def ppmi(co_matrix: np.ndarray, eps=1e-8, show=False) -> np.ndarray:
     return ppmi_matrix
 
 
-def context_target(corpus: np.ndarray, window_size=1) -> (np.ndarray, np.ndarray):
+def context_target(corpus, window_size=1):
     contexts = []
     target = corpus[window_size:-window_size]
 
@@ -93,7 +95,7 @@ def context_target(corpus: np.ndarray, window_size=1) -> (np.ndarray, np.ndarray
     return np.array(contexts), np.array(target)
 
 
-def convert_one_hot(source: np.ndarray, vocal_size) -> np.ndarray:
+def convert_one_hot(source, vocal_size):
     target_shape = (*source.shape, vocal_size)
     target = np.zeros(target_shape, dtype=np.int32)
 
@@ -102,7 +104,7 @@ def convert_one_hot(source: np.ndarray, vocal_size) -> np.ndarray:
     return target
 
 
-def clip_grads(grads: list, max_norm):
+def clip_grads(grads, max_norm):
     total_norm = 0
     for grad in grads:
         total_norm += np.sum(grad ** 2)
@@ -114,8 +116,15 @@ def clip_grads(grads: list, max_norm):
             grad *= rate
 
 
-def progress_bar(now, total, message='', basis=0.01) -> int:
+def progress_bar(now, total, message='', basis=0.01):
     count = int((now / total + basis) * 10)
     print(f'\r{message} [' + '-' * count + ' ' * (10 - count) + ']' +
           f' {count}/10', end='')
     return now
+
+
+def to_gpu(x):
+    import cupy
+    if type(x) is cupy.ndarray:
+        return x
+    return cupy.asarray(x)
