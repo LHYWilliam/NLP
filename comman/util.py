@@ -1,3 +1,5 @@
+import collections
+
 import cupy as np
 
 np.cuda.set_allocator(np.cuda.MemoryPool().malloc)
@@ -76,7 +78,8 @@ def ppmi(co_matrix, eps=1e-8, show=False):
             ppmi_matrix[i, j] = max(0, pmi)
 
             if show:
-                now = progress_bar(now + 1, total)
+                now = now + 1
+                progress_bar(now, total)
 
     return ppmi_matrix
 
@@ -116,11 +119,67 @@ def clip_grads(grads, max_norm):
             grad *= rate
 
 
+def remove_duplicate(params, grads):
+    params, grads = params[:], grads[:]
+
+    while True:
+        find_flag = False
+        L = len(params)
+
+        for i in range(0, L - 1):
+            for j in range(i + 1, L):
+                if params[i] is params[j]:
+                    grads[i] += grads[j]
+                    find_flag = True
+                    params.pop(j)
+                    grads.pop(j)
+
+                elif params[i].ndim == 2 and params[j].ndim == 2 and \
+                        params[i].T.shape == params[j].shape and np.all(params[i].T == params[j]):
+                    grads[i] += grads[j].T
+                    find_flag = True
+                    params.pop(j)
+                    grads.pop(j)
+
+                if find_flag:
+                    break
+            if find_flag:
+                break
+        if find_flag:
+            break
+
+    return params, grads
+
+
+class UnigramSampler:
+    def __init__(self, corpus, power, sample_size):
+        self.sample_size = sample_size
+
+        counts = collections.Counter()
+        for word_id in corpus:
+            counts[word_id] += 1
+        self.vocal_size = len(counts)
+
+        self.word_p = np.zeros(self.vocal_size)
+        for i in range(self.vocal_size):
+            self.word_p[i] = counts[i]
+
+        self.word_p = np.power(self.word_p, power)
+        self.word_p /= np.sum(self.word_p)
+
+    def get_negative_sample(self, target):
+        batch_size = target.shape[0]
+
+        negative_sample = np.random.choice(self.vocal_size, size=(batch_size, self.sample_size),
+                                           replace=True, p=self.word_p)
+
+        return negative_sample
+
+
 def progress_bar(now, total, message='', basis=0.01):
     count = int((now / total + basis) * 10)
     print(f'\r{message} [' + '-' * count + ' ' * (10 - count) + ']' +
           f' {count}/10', end='')
-    return now
 
 
 def to_gpu(x):

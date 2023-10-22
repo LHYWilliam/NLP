@@ -5,6 +5,7 @@ import cupy as np
 import matplotlib.pyplot as plt
 
 from comman.util import (progress_bar)
+from comman.util import (remove_duplicate)
 
 np.cuda.set_allocator(np.cuda.MemoryPool().malloc)
 
@@ -13,8 +14,9 @@ class Trainer:
     def __init__(self, model, optimizer):
         self.model, self.optimizer = model, optimizer
         self.loss_list = []
-        self.val_per_iter = None
+
         self.current_epoch = 0
+        self.val_per_iter = None
 
     def train(self, x, t, goal_epochs=10, batch_size=32):
         data_size = len(x)
@@ -51,6 +53,7 @@ class Trainer:
                     progress_bar(iters, goal_iters, message)
                     self.loss_list.append(float(average_loss))
                     total_loss, loss_count = 0, 0
+
             print()
             self.current_epoch += 1
 
@@ -62,35 +65,3 @@ class Trainer:
         plt.ylabel('loss')
 
         plt.show()
-
-
-def remove_duplicate(params, grads):
-    params, grads = params[:], grads[:]
-
-    while True:
-        find_flag = False
-        L = len(params)
-
-        for i in range(0, L - 1):
-            for j in range(i + 1, L):
-                if params[i] is params[j]:
-                    grads[i] += grads[j]
-                    find_flag = True
-                    params.pop(j)
-                    grads.pop(j)
-
-                elif params[i].ndim == 2 and params[j].ndim == 2 and \
-                        params[i].T.shape == params[j].shape and np.all(params[i].T == params[j]):
-                    grads[i] += grads[j].T
-                    find_flag = True
-                    params.pop(j)
-                    grads.pop(j)
-
-                if find_flag:
-                    break
-            if find_flag:
-                break
-        if find_flag:
-            break
-
-    return params, grads
