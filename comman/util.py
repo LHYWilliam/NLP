@@ -1,4 +1,4 @@
-import collections
+import pickle, collections
 
 import cupy as np
 
@@ -176,6 +176,28 @@ class UnigramSampler:
         return negative_sample
 
 
+def save(model, optimizer, corpus, word_to_id, id_to_word, file):
+    params = {
+        'model': model,
+        'optimizer': optimizer,
+        'corpus': corpus,
+        'word_to_id': word_to_id,
+        'id_to_word': id_to_word
+    }
+
+    with open(file, 'wb') as f:
+        pickle.dump(params, f, -1)
+
+
+def load(file):
+    with open(file, 'rb') as f:
+        params = pickle.load(f)
+    model, optimizer, corpus, word_to_id, id_to_word = (params['model'], params['optimizer'], params['corpus'],
+                                                        params['word_to_id'], params['id_to_word'])
+
+    return model, optimizer, corpus, word_to_id, id_to_word
+
+
 def progress_bar(now, total, message='', basis=0.01):
     count = int((now / total + basis) * 10)
     print(f'\r{message} [' + '-' * count + ' ' * (10 - count) + ']' +
@@ -187,3 +209,10 @@ def to_gpu(x):
     if type(x) is cupy.ndarray:
         return x
     return cupy.asarray(x)
+
+
+def to_cpu(x):
+    import numpy
+    if type(x) is numpy.ndarray:
+        return x
+    return np.asnumpy(x)
