@@ -4,8 +4,7 @@ import numpy
 import cupy as np
 import matplotlib.pyplot as plt
 
-from comman.util import (progress_bar)
-from comman.util import (remove_duplicate)
+from comman.util import (progress_bar, save, remove_duplicate)
 
 np.cuda.set_allocator(np.cuda.MemoryPool().malloc)
 
@@ -18,12 +17,12 @@ class Trainer:
         self.current_epoch = 0
         self.val_per_iter = None
 
-    def train(self, x, t, goal_epochs=10, batch_size=32):
+    def train(self, x, t, goal_epochs=10, batch_size=32, save_file=None):
         data_size = len(x)
         goal_iters = data_size // batch_size
         self.val_per_iter = goal_iters // 10
 
-        total_loss, loss_count = 0, 0
+        min_loss, total_loss, average_loss, loss_count = 10., 0, 0, 0
 
         start_time = time.time()
         for epoch in range(goal_epochs):
@@ -45,6 +44,7 @@ class Trainer:
 
                 if (self.val_per_iter is not None) and (iters % self.val_per_iter) == 0 or iters == goal_iters - 1:
                     average_loss = total_loss / loss_count
+                    min_loss = min(min_loss, float(average_loss))
                     elapsed_time = time.time() - start_time
                     message = f'| epoch {self.current_epoch + 1:{len(str(goal_epochs))}} ' \
                               f'| iter {iters + 1:{len(str(goal_iters))}}/{goal_iters} ' \
@@ -55,6 +55,8 @@ class Trainer:
                     total_loss, loss_count = 0, 0
 
             print()
+            if save_file and average_loss < min_loss:
+                save(save_file, model=self.model)
             self.current_epoch += 1
 
     def plot(self):
